@@ -1,0 +1,11 @@
+Debug
+.settings
+Drivers
+Middlewares
+.cproject
+.mxproject
+.project
+STM32F429ZITX_FLASH.ld
+STM32F429ZITX_RAM.ld
+trabajo_practico_final_RTOSII Debug.launch
+trabajo_practico_final_RTOSII.ioc
