@@ -211,10 +211,10 @@ void USART3_IRQHandler(void)
   /* USER CODE BEGIN USART3_IRQn 1 */
   //huart3.pRxBuffPtr -= 1U;
   bool state=frame_process(&frame,*huart3.pRxBuffPtr);
-  if (state==1)
+  /*if (state==1)
   {
 	  HAL_UART_Transmit(&huart3,"TRAMA OK",9,20);
-  }
+  }*/
 
   /* USER CODE END USART3_IRQn 1 */
 }

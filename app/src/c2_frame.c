@@ -40,6 +40,7 @@ bool frame_process(ts_frame *self, uint8_t byte)
                 if (validate_crc_hex(&c2_parser) == 1)
                 {
                 	xQueueSendToFrontFromISR(self->c2_queue,(void*)&self->buffer,0);
+                	self->count_buffer=0;
                     return 1;
                 }
             }
