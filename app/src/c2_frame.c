@@ -4,6 +4,8 @@
 
 void timer_call_back(TimerHandle_t timer)
 {
+	ts_frame *frame=(ts_frame*) pvTimerGetTimerID(timer);
+	frame->count_buffer=0;
 }
 void frame_init(ts_frame *self, uint8_t *buffer, uint8_t max_size_buffer, uint8_t size_buffer, en_frame state_frame, uint8_t count_buffer)
 {
@@ -13,7 +15,7 @@ void frame_init(ts_frame *self, uint8_t *buffer, uint8_t max_size_buffer, uint8_
     self->state_frame = state_frame;
     self->count_buffer = count_buffer;
     self->c2_queue = xQueueCreate((unsigned portBASE_TYPE) 1, sizeof(void*));
-    self->timer=xTimerCreate("Timerx",1000, pdFALSE,(void*)0,timer_call_back);
+    self->timer=xTimerCreate("Timerx",10000, pdFALSE,(void*)self,timer_call_back);
 }
 bool frame_process(ts_frame *self, uint8_t byte)
 {
@@ -25,12 +27,14 @@ bool frame_process(ts_frame *self, uint8_t byte)
             self->buffer[self->count_buffer] = byte;
             self->count_buffer++;
             self->state_frame = EOM;
+            xTimerStartFromISR(self->timer,0);
         }
         return 0;
         break;
     case EOM:
         if (byte == ')')
         {
+        	xTimerStopFromISR(self->timer,0);
             self->buffer[self->count_buffer] = byte;
             ts_c2_parser c2_parser;
             self->state_frame = SOM;
@@ -59,6 +63,7 @@ bool frame_process(ts_frame *self, uint8_t byte)
                 self->buffer[self->count_buffer] = byte;
                 self->count_buffer++;
             }
+            xTimerStartFromISR(self->timer,0);
         }
         return 0;
         break;

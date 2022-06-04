@@ -68,7 +68,6 @@ static void task_c3(void *p_parameter)
 {
   while (true)
   {
-	  portBASE_TYPE status;
 	  void *message;
 	  xQueueReceive(frame.c2_queue, (void*)&message,portMAX_DELAY);
 	  HAL_UART_Transmit(&huart3,message,40,200);
