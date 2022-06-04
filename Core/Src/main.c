@@ -47,6 +47,7 @@ UART_HandleTypeDef huart3;
 //osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
 uint8_t pbuffer[1];
+uint8_t pbuffer2[1];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -97,6 +98,7 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_UART_Receive_IT(&huart3, pbuffer,1);
+  HAL_UART_Receive_IT(&huart2, pbuffer2,1);
   application();
   //HAL_UART_Receive_IT(&huart3,&data,1);
   // UART_Start_Receive_IT(s&huart3, &data,1);
@@ -361,7 +363,14 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	HAL_UART_Receive_IT(&huart3, pbuffer,1);
+	if (huart==&huart3) {
+		HAL_UART_Receive_IT(&huart3, pbuffer,1);
+	}
+	if (huart==&huart2)
+	{
+		HAL_UART_Receive_IT(&huart2, pbuffer,1);
+	}
+
 }
 /* USER CODE END 4 */
 

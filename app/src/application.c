@@ -49,7 +49,10 @@
 
 ts_frame frame;
 uint8_t buffer[200];
+ts_frame frame2;
+uint8_t buffer2[200];
 extern UART_HandleTypeDef huart3;
+extern UART_HandleTypeDef huart2;
 /********************** external data definition *****************************/
 
 /********************** internal functions definition ************************/
@@ -60,7 +63,9 @@ static void task_c2(void *p_parameter)
 {
   while (true)
   {
-
+	  void *message;
+	  xQueueReceive(frame2.c2_queue, (void*)&message,portMAX_DELAY);
+	  HAL_UART_Transmit(&huart2,message,40,200);
   }
 }
 
@@ -83,6 +88,7 @@ int application(void)
   configASSERT(res == pdPASS);
 
   frame_init(&frame,buffer,200,200,SOM,0);
+  frame_init(&frame2,buffer2,200,200,SOM,0);
   osKernelStart();
 
   while (1)

@@ -61,6 +61,7 @@
 extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
 extern ts_frame frame;
+extern ts_frame frame2;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -195,7 +196,7 @@ void USART2_IRQHandler(void)
   /* USER CODE END USART2_IRQn 0 */
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
-
+  bool state=frame_process(&frame2,*huart2.pRxBuffPtr);
   /* USER CODE END USART2_IRQn 1 */
 }
 
