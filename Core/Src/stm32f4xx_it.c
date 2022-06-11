@@ -196,7 +196,7 @@ void USART2_IRQHandler(void)
   /* USER CODE END USART2_IRQn 0 */
   HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
-  bool state=frame_process(&frame2,*huart2.pRxBuffPtr);
+  frame_process(&frame2,*huart2.pRxBuffPtr);
   /* USER CODE END USART2_IRQn 1 */
 }
 
@@ -211,7 +211,7 @@ void USART3_IRQHandler(void)
   HAL_UART_IRQHandler(&huart3);
   /* USER CODE BEGIN USART3_IRQn 1 */
   //huart3.pRxBuffPtr -= 1U;
-  bool state=frame_process(&frame,*huart3.pRxBuffPtr);
+  frame_process(&frame,*huart3.pRxBuffPtr);
   /*if (state==1)
   {
 	  HAL_UART_Transmit(&huart3,"TRAMA OK",9,20);

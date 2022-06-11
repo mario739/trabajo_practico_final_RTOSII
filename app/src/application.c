@@ -77,10 +77,11 @@ static void task_c2_out(void *p_parameter)
   {
 	  void *message;
 	  xQueueReceive(frame.c2_queue_out,&message,portMAX_DELAY);
-      uint8_t data= calculate_crc(&frame);
-      convert_uint_to_ascii(frame.buffer+frame.count_buffer-2,data);
+      uint8_t data = calculate_crc(&frame);
+      convert_uint_to_ascii(frame.buffer+frame.count_buffer-3, data);
+	  HAL_UART_Transmit_IT(&huart3, frame.buffer, frame.count_buffer);
       frame.count_buffer=0;
-	  HAL_UART_Transmit_IT(&huart3,frame.buffer, 200);
+	  //memset(frame.buffer,'\0',200);
   }
 }
 static void task_c3(void *p_parameter)

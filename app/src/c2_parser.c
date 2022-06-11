@@ -5,7 +5,7 @@ void c2_parser_init(ts_c2_parser *self, uint8_t *buffer, uint8_t size)
     self->buffer = buffer;
     self->size_buffer = size;
     self->id = (self->buffer) + 1;
-    self->crc = (self->buffer +size - 2);
+    self->crc = (self->buffer + size - 3);
 }
 bool validate_id_hex(ts_c2_parser *self)
 {

@@ -17,7 +17,7 @@ void frame_init(ts_frame *self, uint8_t *buffer, uint8_t max_size_buffer, uint8_
     self->c2_queue_out = xQueueCreate((unsigned portBASE_TYPE) 1, sizeof(void*));
     self->timer=xTimerCreate("Timerx",10000, pdFALSE,(void*)self,timer_call_back);
 }
-bool frame_process(ts_frame *self, uint8_t byte)
+void frame_process(ts_frame *self, uint8_t byte)
 {
     switch (self->state_frame)
     {
@@ -29,32 +29,38 @@ bool frame_process(ts_frame *self, uint8_t byte)
             self->state_frame = EOM;
             xTimerStartFromISR(self->timer,0);
         }
-        return 0;
         break;
     case EOM:
         if (byte == ')')
         {
         	xTimerStopFromISR(self->timer,0);
-            self->buffer[self->count_buffer] = byte;
-            ts_c2_parser c2_parser;
+
+        	self->buffer[self->count_buffer] = byte;
+            self->count_buffer++;
             self->state_frame = SOM;
+
+            ts_c2_parser c2_parser;
             c2_parser_init(&c2_parser, self->buffer, self->count_buffer);
-            if (validate_id_hex(&c2_parser) == 1)
+
+            if (validate_id_hex(&c2_parser) == 1 && validate_crc_hex(&c2_parser) == 1)
             {
-                if (validate_crc_hex(&c2_parser) == 1)
-                {
-                	uint8_t crc=calculate_crc(self);
-                	uint8_t crc2=convert_ascii_to_uint(self->buffer+(self->count_buffer-2));
-                	if (crc==crc2)
-                	{
-                    	xQueueSendToFrontFromISR(self->c2_queue,(void*)&self->buffer,0);
-                    	//self->count_buffer=0;
-                        return 1;
-					}
-                }
+				uint8_t crc = calculate_crc(self);
+				uint8_t crc2 = convert_ascii_to_uint(self->buffer+(self->count_buffer-3));
+				if (crc == crc2)
+				{
+					xQueueSendToFrontFromISR(self->c2_queue,(void*)&self->buffer,0);
+				}
+				else
+				{
+					memset(self->buffer,'\0',200);
+					self->count_buffer=0;
+				}
             }
-            memset(self->buffer,'\0',self->count_buffer);
-            self->count_buffer=0;
+            else
+            {
+            	memset(self->buffer,'\0',200);
+				self->count_buffer=0;
+            }
         }
         else
         {
@@ -62,6 +68,7 @@ bool frame_process(ts_frame *self, uint8_t byte)
             {
                 self->count_buffer = 0;
                 self->buffer[self->count_buffer] = byte;
+                self->count_buffer++;
             }
             else
             {
@@ -70,17 +77,18 @@ bool frame_process(ts_frame *self, uint8_t byte)
             }
             xTimerStartFromISR(self->timer,0);
         }
-        return 0;
         break;
     default:
         break;
     }
 }
+
 uint8_t calculate_crc(ts_frame *self)
 {
-    uint8_t data_crc=crc8_calc(0,self->buffer+1,self->count_buffer-3);
+    uint8_t data_crc = crc8_calc(0, self->buffer+1, self->count_buffer-4);
     return data_crc;
 }
+
 uint8_t convert_ascii_to_uint(uint8_t *data)
 {
 	uint8_t result = 0;
