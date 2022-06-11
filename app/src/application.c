@@ -38,6 +38,7 @@
 
 /********************** inclusions *******************************************/
 #include "application.h"
+#include<stdlib.h>
 
 /********************** macros and definitions *******************************/
 
@@ -65,19 +66,33 @@ static void task_c2(void *p_parameter)
   {
 	  void *message;
 	  xQueueReceive(frame2.c2_queue, (void*)&message,portMAX_DELAY);
-	  HAL_UART_Transmit(&huart2,message,40,200);
+	  HAL_UART_Transmit(&huart2,message,40,10);
   }
 }
 
+
+static void task_c2_out(void *p_parameter)
+{
+  while (true)
+  {
+	  void *message;
+	  xQueueReceive(frame.c2_queue_out,&message,portMAX_DELAY);
+	  //calcular crc
+	  HAL_UART_Transmit_IT(&huart3,message, 200);
+  }
+}
 static void task_c3(void *p_parameter)
 {
   while (true)
   {
 	  void *message;
-	  xQueueReceive(frame.c2_queue, (void*)&message,portMAX_DELAY);
-	  HAL_UART_Transmit(&huart3,message,40,200);
+	  xQueueReceive(frame.c2_queue,&message,portMAX_DELAY);
+
+	  xQueueSend(frame.c2_queue_out,&message,0);
   }
 }
+
+
 int application(void)
 {
   BaseType_t res;
@@ -85,6 +100,9 @@ int application(void)
   configASSERT(res == pdPASS);
 
   res = xTaskCreate(task_c3, (const char*)"task_c3", configMINIMAL_STACK_SIZE * 2, NULL,tskIDLE_PRIORITY + 1, NULL);
+  configASSERT(res == pdPASS);
+
+  res = xTaskCreate(task_c2_out, (const char*)"task_c2_out", configMINIMAL_STACK_SIZE * 2, NULL,tskIDLE_PRIORITY + 1, NULL);
   configASSERT(res == pdPASS);
 
   frame_init(&frame,buffer,200,200,SOM,0);
@@ -95,6 +113,18 @@ int application(void)
   {
   }
   return 1;
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if (huart==&huart3)
+	{
+
+	}
+	if (huart==&huart2)
+	{
+
+	}
 }
 
 /********************** end of file ******************************************/

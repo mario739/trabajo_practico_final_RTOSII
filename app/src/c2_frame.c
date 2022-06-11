@@ -1,7 +1,6 @@
 #include "c2_frame.h"
 #include "c2_parser.h"
 
-
 void timer_call_back(TimerHandle_t timer)
 {
 	ts_frame *frame=(ts_frame*) pvTimerGetTimerID(timer);
@@ -9,12 +8,13 @@ void timer_call_back(TimerHandle_t timer)
 }
 void frame_init(ts_frame *self, uint8_t *buffer, uint8_t max_size_buffer, uint8_t size_buffer, en_frame state_frame, uint8_t count_buffer)
 {
-    self->buffer = buffer;
+    self->buffer =buffer;
     self->max_size_buffer = max_size_buffer;
     self->size_buffer = size_buffer;
     self->state_frame = state_frame;
     self->count_buffer = count_buffer;
     self->c2_queue = xQueueCreate((unsigned portBASE_TYPE) 1, sizeof(void*));
+    self->c2_queue_out = xQueueCreate((unsigned portBASE_TYPE) 1, sizeof(void*));
     self->timer=xTimerCreate("Timerx",10000, pdFALSE,(void*)self,timer_call_back);
 }
 bool frame_process(ts_frame *self, uint8_t byte)
@@ -43,9 +43,14 @@ bool frame_process(ts_frame *self, uint8_t byte)
             {
                 if (validate_crc_hex(&c2_parser) == 1)
                 {
-                	xQueueSendToFrontFromISR(self->c2_queue,(void*)&self->buffer,0);
-                	self->count_buffer=0;
-                    return 1;
+                	uint8_t crc=calculate_crc(self);
+                	uint8_t crc2=convert_ascii_to_uint(self->buffer+(self->count_buffer-2));
+                	if (crc==crc2)
+                	{
+                    	xQueueSendToFrontFromISR(self->c2_queue,(void*)&self->buffer,0);
+                    	self->count_buffer=0;
+                        return 1;
+					}
                 }
             }
             memset(self->buffer,'\0',self->count_buffer);
@@ -71,4 +76,42 @@ bool frame_process(ts_frame *self, uint8_t byte)
         break;
     }
 }
+uint8_t calculate_crc(ts_frame *self)
+{
+    uint8_t data_crc=crc8_calc(0,self->buffer+1,self->count_buffer-3);
+    return data_crc;
+}
+uint8_t convert_ascii_to_uint(uint8_t *data)
+{
+	uint8_t result = 0;
+	if (data[0] >= 'A' && data[0] <= 'F')
+		result = (10 + data[0] - 'A') * 16;
+	else
+		result = (data[0] - '0') * 16;
+
+	if (data[1] >= 'A' && data[1] <= 'F')
+		result += 10 + data[1] - 'A';
+	else
+		result += data[1] - '0';
+
+	return result;
+}
+
+void convert_uint_to_ascii(uint8_t *data,uint8_t crc)
+{
+    uint8_t msn, lsn;
+    msn = crc / 16;
+    lsn = crc - msn * 16;
+
+    if (msn < 10)
+        data[0] = msn + '0';
+    else
+        data[0] = msn - 10 + 'A';
+
+    if (lsn < 10)
+        data[1] = lsn + '0';
+    else
+        data[1] = lsn - 10 + 'A';
+}
+
 
