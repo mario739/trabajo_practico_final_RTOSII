@@ -11,7 +11,7 @@
 
 #include "package.h"
 
-ts_erroy_type validate_data(ts_frame *self)
+ts_erroy_type validate_data(ts_package *self)
 {
     //valida si el primer byte de datos no es '_'
     if ((self->buffer[6]=='_') || (self->buffer[6]==' '))
@@ -32,7 +32,7 @@ ts_erroy_type validate_data(ts_frame *self)
     return NO_ERROR;
 }
 
-void convert_snake_case(ts_frame *self)
+void convert_snake_case(ts_package *self)
 {
     for (uint8_t i = 6; i < self->count_buffer-4; i++)
     {
@@ -53,7 +53,7 @@ void convert_snake_case(ts_frame *self)
     }
 }
 
-void convert_camel_case(ts_frame *self)
+void convert_camel_case(ts_package *self)
 {
     for (uint8_t i = 6; i < self->count_buffer-4; i++)
     {
@@ -76,7 +76,7 @@ void convert_camel_case(ts_frame *self)
     }  
 }
 
-void convert_pascal_case(ts_frame *self)
+void convert_pascal_case(ts_package *self)
 {
     for (uint8_t i = 6; i < self->count_buffer-4 ; i++)
     {
@@ -100,7 +100,7 @@ void convert_pascal_case(ts_frame *self)
     }
 }
 
-void process_package(ts_frame *self)
+void process_package(ts_package *self)
 {
     if (self->buffer[5]=='S')
     {

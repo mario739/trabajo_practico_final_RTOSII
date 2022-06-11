@@ -24,12 +24,17 @@ typedef enum
     ERROR_SYSTEM,
     NO_ERROR
 } ts_erroy_type;
+typedef struct
+{
+    uint8_t *buffer;
+    uint8_t count_buffer;
+} ts_package;
 
-ts_erroy_type validate_data(ts_frame *self);
-void convert_snake_case(ts_frame *self);
-void convert_camel_case(ts_frame *self);
-void convert_pascal_case(ts_frame *self);
-void process_package(ts_frame *self);
+ts_erroy_type validate_data(ts_package *self);
+void convert_snake_case(ts_package *self);
+void convert_camel_case(ts_package *self);
+void convert_pascal_case(ts_package *self);
+void process_package(ts_package *self);
 #endif
 
 

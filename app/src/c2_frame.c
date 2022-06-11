@@ -1,22 +1,28 @@
 #include "c2_frame.h"
 #include "c2_parser.h"
+#include "package.h"
 
 void timer_call_back(TimerHandle_t timer)
 {
 	ts_frame *frame=(ts_frame*) pvTimerGetTimerID(timer);
 	frame->count_buffer=0;
 }
-void frame_init(ts_frame *self, uint8_t *buffer, uint8_t max_size_buffer, uint8_t size_buffer, en_frame state_frame, uint8_t count_buffer)
+
+void frame_init(ts_frame *self)
 {
-    self->buffer =buffer;
-    self->max_size_buffer = max_size_buffer;
-    self->size_buffer = size_buffer;
-    self->state_frame = state_frame;
-    self->count_buffer = count_buffer;
+    frame_reset(self);
     self->c2_queue = xQueueCreate((unsigned portBASE_TYPE) 1, sizeof(void*));
     self->c2_queue_out = xQueueCreate((unsigned portBASE_TYPE) 1, sizeof(void*));
-    self->timer=xTimerCreate("Timerx",10000, pdFALSE,(void*)self,timer_call_back);
+    self->timer = xTimerCreate("Timerx", 10000,  pdFALSE, (void*)self, timer_call_back);
 }
+
+void frame_reset(ts_frame *self)
+{
+    self->buffer = malloc(sizeof(uint8_t)*BUFFER_MAX_SIZE);
+    self->state_frame = SOM;
+    self->count_buffer = 0;
+}
+
 void frame_process(ts_frame *self, uint8_t byte)
 {
     switch (self->state_frame)
@@ -44,11 +50,21 @@ void frame_process(ts_frame *self, uint8_t byte)
 
             if (validate_id_hex(&c2_parser) == 1 && validate_crc_hex(&c2_parser) == 1)
             {
-				uint8_t crc = calculate_crc(self);
+				uint8_t crc = calculate_crc(self->buffer, self->count_buffer);
 				uint8_t crc2 = convert_ascii_to_uint(self->buffer+(self->count_buffer-3));
 				if (crc == crc2)
 				{
-					xQueueSendToFrontFromISR(self->c2_queue,(void*)&self->buffer,0);
+					//ts_package *p_package = malloc(sizeof(ts_package));
+					//p_package->buffer = self->buffer;
+					//p_package->count_buffer = self->count_buffer;
+					ts_package package = {
+							self->buffer,
+							self->count_buffer
+					};
+					ts_package *p_package = &package;
+
+					frame_reset(self);
+					xQueueSendToFrontFromISR(self->c2_queue, (void *)&p_package, 0);
 				}
 				else
 				{
@@ -83,9 +99,9 @@ void frame_process(ts_frame *self, uint8_t byte)
     }
 }
 
-uint8_t calculate_crc(ts_frame *self)
+uint8_t calculate_crc(uint8_t *buffer, uint8_t count_buffer)
 {
-    uint8_t data_crc = crc8_calc(0, self->buffer+1, self->count_buffer-4);
+    uint8_t data_crc = crc8_calc(0, buffer+1, count_buffer-4);
     return data_crc;
 }
 
@@ -105,7 +121,7 @@ uint8_t convert_ascii_to_uint(uint8_t *data)
 	return result;
 }
 
-void convert_uint_to_ascii(uint8_t *data,uint8_t crc)
+void convert_uint_to_ascii(uint8_t *data, uint8_t crc)
 {
     uint8_t msn, lsn;
     msn = crc / 16;
