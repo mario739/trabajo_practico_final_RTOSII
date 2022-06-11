@@ -112,7 +112,7 @@ int application(void)
   return 1;
 }
 
-static void task_c2(void *p_parameter)
+/*static void task_c2(void *p_parameter)
 {
   while (true)
   {
@@ -120,7 +120,7 @@ static void task_c2(void *p_parameter)
 	  xQueueReceive(frame2.c2_queue, (void*)&message,portMAX_DELAY);
 	  HAL_UART_Transmit(&huart2,message,40,10);
   }
-}
+}*/
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
