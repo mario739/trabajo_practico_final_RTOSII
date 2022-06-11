@@ -39,7 +39,7 @@
 /********************** inclusions *******************************************/
 #include "application.h"
 #include<stdlib.h>
-
+#include "package.h"
 /********************** macros and definitions *******************************/
 
 /********************** internal data declaration ****************************/
@@ -77,8 +77,10 @@ static void task_c2_out(void *p_parameter)
   {
 	  void *message;
 	  xQueueReceive(frame.c2_queue_out,&message,portMAX_DELAY);
-	  //calcular crc
-	  HAL_UART_Transmit_IT(&huart3,message, 200);
+      uint8_t data= calculate_crc(&frame);
+      convert_uint_to_ascii(frame.buffer+frame.count_buffer-2,data);
+      frame.count_buffer=0;
+	  HAL_UART_Transmit_IT(&huart3,frame.buffer, 200);
   }
 }
 static void task_c3(void *p_parameter)
@@ -87,7 +89,8 @@ static void task_c3(void *p_parameter)
   {
 	  void *message;
 	  xQueueReceive(frame.c2_queue,&message,portMAX_DELAY);
-
+	  validate_data(&frame);
+	  process_package(&frame);
 	  xQueueSend(frame.c2_queue_out,&message,0);
   }
 }

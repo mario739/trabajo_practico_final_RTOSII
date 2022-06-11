@@ -48,7 +48,7 @@ bool frame_process(ts_frame *self, uint8_t byte)
                 	if (crc==crc2)
                 	{
                     	xQueueSendToFrontFromISR(self->c2_queue,(void*)&self->buffer,0);
-                    	self->count_buffer=0;
+                    	//self->count_buffer=0;
                         return 1;
 					}
                 }

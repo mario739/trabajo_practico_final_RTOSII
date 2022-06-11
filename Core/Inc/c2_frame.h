@@ -1,3 +1,7 @@
+
+#ifndef  FRAME_H
+#define FRAME_H
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
@@ -25,3 +29,5 @@ bool frame_process(ts_frame *self, uint8_t byte);
 uint8_t calculate_crc(ts_frame *self);
 uint8_t convert_ascii_to_uint(uint8_t *data);
 void convert_uint_to_ascii(uint8_t *data,uint8_t crc);
+
+#endif
