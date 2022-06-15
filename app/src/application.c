@@ -49,9 +49,9 @@
 /********************** internal data definition *****************************/
 
 ts_frame frame;
-
 ts_frame frame2;
 uint8_t buffer2[200];
+ts_package *package;
 extern UART_HandleTypeDef huart3;
 extern UART_HandleTypeDef huart2;
 /********************** external data definition *****************************/
@@ -67,12 +67,11 @@ static void task_c2_out(void *p_parameter)
 	  void *message;
 	  xQueueReceive(frame.c2_queue_out, &message, portMAX_DELAY);
 
-	  ts_package *package = (ts_package *)message;
+	 package = (ts_package *)message;
 	  uint8_t data = calculate_crc(package->buffer, package->count_buffer);
       convert_uint_to_ascii(package->buffer+package->count_buffer-3, data);
 
       HAL_UART_Transmit_IT(&huart3, package->buffer, package->count_buffer);
-      free(package->buffer);
   }
 }
 
@@ -84,9 +83,17 @@ static void task_c3(void *p_parameter)
 	  xQueueReceive(frame.c2_queue, &message, portMAX_DELAY);
 
 	  ts_package *package = (ts_package *)message;
-	  validate_data(package);
+	  switch ( validate_data(package)) {
+		case ERROR_INVALID_DATA :
+			trama_error(package,ERROR_INVALID_DATA);
+			break;
+		case ERROR_INVALID_OPCODE:
+			trama_error(package,ERROR_INVALID_OPCODE);
+			break;
+		default:
+			break;
+	}
 	  process_package(package);
-
 	  xQueueSend(frame.c2_queue_out, &package, 0);
   }
 }
@@ -94,8 +101,6 @@ static void task_c3(void *p_parameter)
 int application(void)
 {
   BaseType_t res;
-  //res = xTaskCreate(task_c2, (const char*)"task_c2", configMINIMAL_STACK_SIZE * 2, NULL,tskIDLE_PRIORITY + 1, NULL);
-  //configASSERT(res == pdPASS);
 
   res = xTaskCreate(task_c3, (const char*)"task_c3", configMINIMAL_STACK_SIZE * 2, NULL,tskIDLE_PRIORITY + 1, NULL);
   configASSERT(res == pdPASS);
@@ -112,21 +117,11 @@ int application(void)
   return 1;
 }
 
-/*static void task_c2(void *p_parameter)
-{
-  while (true)
-  {
-	  void *message;
-	  xQueueReceive(frame2.c2_queue, (void*)&message,portMAX_DELAY);
-	  HAL_UART_Transmit(&huart2,message,40,10);
-  }
-}*/
-
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
 	if (huart==&huart3)
 	{
-
+	      free(package->buffer);
 	}
 	if (huart==&huart2)
 	{

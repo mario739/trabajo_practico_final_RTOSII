@@ -13,12 +13,12 @@ void frame_init(ts_frame *self)
     frame_reset(self);
     self->c2_queue = xQueueCreate((unsigned portBASE_TYPE) 1, sizeof(void*));
     self->c2_queue_out = xQueueCreate((unsigned portBASE_TYPE) 1, sizeof(void*));
-    self->timer = xTimerCreate("Timerx", 10000,  pdFALSE, (void*)self, timer_call_back);
+    self->timer = xTimerCreate("Timerx", 4,  pdFALSE, (void*)self, timer_call_back);
 }
 
 void frame_reset(ts_frame *self)
 {
-    self->buffer = malloc(sizeof(uint8_t)*BUFFER_MAX_SIZE);
+    self->buffer =malloc(sizeof(uint8_t)*BUFFER_MAX_SIZE);
     self->state_frame = SOM;
     self->count_buffer = 0;
 }
@@ -54,9 +54,6 @@ void frame_process(ts_frame *self, uint8_t byte)
 				uint8_t crc2 = convert_ascii_to_uint(self->buffer+(self->count_buffer-3));
 				if (crc == crc2)
 				{
-					//ts_package *p_package = malloc(sizeof(ts_package));
-					//p_package->buffer = self->buffer;
-					//p_package->count_buffer = self->count_buffer;
 					ts_package package = {
 							self->buffer,
 							self->count_buffer
@@ -137,5 +134,6 @@ void convert_uint_to_ascii(uint8_t *data, uint8_t crc)
     else
         data[1] = lsn - 10 + 'A';
 }
+
 
 

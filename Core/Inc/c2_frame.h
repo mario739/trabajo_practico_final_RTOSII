@@ -15,6 +15,7 @@ typedef enum
     SOM,
     EOM,
 } en_frame;
+
 typedef struct
 {
     uint8_t *buffer;

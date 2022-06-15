@@ -35,6 +35,7 @@ void convert_snake_case(ts_package *self);
 void convert_camel_case(ts_package *self);
 void convert_pascal_case(ts_package *self);
 void process_package(ts_package *self);
+void trama_error( ts_package *data,ts_erroy_type error);
 #endif
 
 
